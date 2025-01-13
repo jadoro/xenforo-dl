@@ -65,7 +65,7 @@ export default class Parser {
 
         const index = el.find('ul.message-attribution-opposite li').last().text().trim();
 
-        const attachmentLinks = el
+        const attachmentLinksOld = el
           .find('a')
           .map((_i, _el) => {
             const linkEl = $(_el);
@@ -87,6 +87,31 @@ export default class Parser {
           })
           .toArray()
           .filter((v) => v !== null);
+
+        const attachmentLinksNew = el
+          .find('img')
+          .map((_i, _el) => {
+            const linkEl = $(_el);
+            const href = linkEl.attr('src');
+            if (href) {
+              const attachmentLinkRegex = /\/attachments\/(.+)\.(\d+)/g;
+              const matches = attachmentLinkRegex.exec(href);
+              if (matches && !isNaN(Number(matches[2]))) {
+                const imgEl = linkEl;
+                return {
+                  id: Number(matches[2]),
+                  url: new URL(href, url).toString(),
+                  filename: imgEl.attr('alt') || imgEl.attr('title'),
+                  el: linkEl
+                };
+              }
+            }
+            return null;
+          })
+          .toArray()
+          .filter((v) => v !== null);
+
+        const attachmentLinks = attachmentLinksOld.concat(attachmentLinksNew);
 
         attachmentLinks.forEach((link) => link.el.remove());
 
